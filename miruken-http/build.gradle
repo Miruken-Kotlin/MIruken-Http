@@ -1,7 +1,13 @@
 apply from: "${rootDir}/gradle/kotlin.gradle"
 
 dependencies {
-
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
+    api "com.miruken:miruken:$miruken_version"
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:3.10.0'
 }
 
 def artifactName = 'miruken-http'
@@ -10,7 +16,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             from components.java
-            groupId    mirukenGroupId
+            groupId    mirukenHttpGroupId
             artifactId artifactName
             pom.withXml {
                 def properties = asNode().appendNode('properties')
@@ -28,10 +34,10 @@ bintray {
     publish      = true
     pkg {
         name     = artifactName
-        userOrg  = mirukenOrg
-        repo     = mirukenRepo
-        licenses = [mirukenLicense]
-        vcsUrl   = mirukenVcsUrl
+        userOrg  = mirukenHttpOrg
+        repo     = mirukenHttpRepo
+        licenses = [mirukenHttpLicense]
+        vcsUrl   = mirukenHttpVcsUrl
         version {
             released = new Date()
         }
