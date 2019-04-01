@@ -1,0 +1,17 @@
+apply plugin: 'org.jetbrains.kotlin.jvm'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
+apply plugin: 'java-library'
+
+repositories {
+    jcenter()
+}
+
+version = packageVersion
+
+dependencies {
+    implementation     'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation     'org.jetbrains.kotlin:kotlin-reflect'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+}

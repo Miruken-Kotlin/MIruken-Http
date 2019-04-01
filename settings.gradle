@@ -1,0 +1,5 @@
+rootProject.name = 'Miruken-Http'
+
+include 'miruken-http',
+        'miruken-http-jackson'
+
