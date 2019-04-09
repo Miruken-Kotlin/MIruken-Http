@@ -19,7 +19,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             from components.java
-            groupId    mirukenHttpGroupId
+            groupId    mirukenGroupId
             artifactId artifactName
             pom.withXml {
                 def properties = asNode().appendNode('properties')
@@ -37,10 +37,10 @@ bintray {
     publish      = true
     pkg {
         name     = artifactName
-        userOrg  = mirukenHttpOrg
-        repo     = mirukenHttpRepo
-        licenses = [mirukenHttpLicense]
-        vcsUrl   = mirukenHttpVcsUrl
+        userOrg  = mirukenOrg
+        repo     = mirukenRepo
+        licenses = [mirukenLicense]
+        vcsUrl   = mirukenVcsUrl
         version {
             released = new Date()
         }
