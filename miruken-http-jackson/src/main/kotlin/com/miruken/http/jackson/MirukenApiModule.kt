@@ -17,6 +17,7 @@ import com.miruken.api.Try
 import com.miruken.http.RawJson
 import java.lang.reflect.Type
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -39,6 +40,9 @@ object MirukenApiModule : SimpleModule() {
 
         addSerializer(LocalDateTime::class.java, LocalDateTimeSerializer)
         addDeserializer(LocalDateTime::class.java, LocalDateTimeDeserializer)
+
+        addSerializer(OffsetDateTime::class.java, OffsetDateTimeSerializer)
+        addDeserializer(OffsetDateTime::class.java, OffsetDateTimeDeserializer)
 
         addSerializer(Throwable::class.java, ThrowableSerializer)
         addDeserializer(Throwable::class.java, ThrowableDeserializer)
