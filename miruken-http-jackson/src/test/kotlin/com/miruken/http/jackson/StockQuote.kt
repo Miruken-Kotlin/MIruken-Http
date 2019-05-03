@@ -27,7 +27,8 @@ data class StockQuote(
 }
 
 data class GetStockQuote(
-        val symbol: String,
+        val symbol:       String,
+        val isPercentage: Boolean? = null,
         override val typeName: String = StockQuote.typeName
 ): Request<StockQuote> {
     companion object : NamedType {

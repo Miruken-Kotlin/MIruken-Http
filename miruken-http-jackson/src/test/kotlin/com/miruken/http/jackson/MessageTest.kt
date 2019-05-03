@@ -34,6 +34,12 @@ class MessageTest {
         assertEquals("{\"payload\":{\"\$type\":\"StockQuote\",\"symbol\":\"AAPL\",\"value\":207.48,\"type\":0}}", json)
     }
 
+    @Test fun `Serializes message with is property`() {
+        val message = Message(GetStockQuote("AAPL", isPercentage = true))
+        val json    = JacksonProvider.mapper.writeValueAsString(message)
+        assertEquals("{\"payload\":{\"\$type\":\"StockQuote\",\"symbol\":\"AAPL\",\"isPercentage\":true}}", json)
+    }
+
     data class StockQuote(
             val symbol: String,
             val value:  Double,
