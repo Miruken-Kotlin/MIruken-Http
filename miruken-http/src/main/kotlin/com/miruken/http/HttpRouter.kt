@@ -7,10 +7,14 @@ import com.miruken.api.route.Routes
 import com.miruken.callback.*
 import com.miruken.concurrent.Promise
 import com.miruken.concurrent.timeout
+import com.miruken.map.map
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
 import retrofit2.Converter
 import retrofit2.HttpException
+import retrofit2.Response
 import retrofit2.Retrofit
+import java.lang.Exception
 import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -22,6 +26,10 @@ class HttpRouter
 
     private val _httpClient = OkHttpClient.Builder().build()
     private val _apis = ConcurrentHashMap<HttpOptions, HttpRouteApi>()
+    private val _errorConverter = converter.responseBodyConverter(
+            Message::class.java, Message::class.java.annotations,
+            Retrofit.Builder().baseUrl("http://localhost/")
+                    .build())
 
     @Handles
     fun route(routed: Routed, command: Command, composer: Handling): Promise<*> {
@@ -60,6 +68,21 @@ class HttpRouter
                     .create(HttpRouteApi::class.java)
         }
 
+    private fun handleError(response: Response<Message>, composer: Handling): Exception? {
+        val errorBody = response.errorBody()
+        if (_errorConverter != null && errorBody != null) {
+            val payload = try {
+                val message = _errorConverter.convert(errorBody) as? Message
+                message?.payload
+            } catch (t: Throwable) {
+                null
+            }
+            if (payload != null) {
+
+            }
+        }
+        throw HttpException(response)
+    }
 
     private fun getResourceUrl(routed: Routed, command: Command) =
             URI(routed.route).resolve(when (command.many) {
