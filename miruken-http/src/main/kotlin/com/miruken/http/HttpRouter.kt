@@ -9,12 +9,10 @@ import com.miruken.concurrent.Promise
 import com.miruken.concurrent.timeout
 import com.miruken.map.map
 import okhttp3.OkHttpClient
-import okhttp3.ResponseBody
 import retrofit2.Converter
 import retrofit2.HttpException
 import retrofit2.Response
 import retrofit2.Retrofit
-import java.lang.Exception
 import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -43,7 +41,7 @@ class HttpRouter
             if (it.isSuccessful) {
                 it.body()?.payload
             } else {
-                throw HttpException(it)
+                handleError(it, composer)
             }
         }).timeout(options.timeoutSeconds!! * 1000)
     }
@@ -68,17 +66,19 @@ class HttpRouter
                     .create(HttpRouteApi::class.java)
         }
 
-    private fun handleError(response: Response<Message>, composer: Handling): Exception? {
+    private fun handleError(response: Response<Message>, composer: Handling): Nothing {
         val errorBody = response.errorBody()
         if (_errorConverter != null && errorBody != null) {
-            val payload = try {
+            try {
                 val message = _errorConverter.convert(errorBody) as? Message
                 message?.payload
             } catch (t: Throwable) {
                 null
-            }
-            if (payload != null) {
-
+            }?.also { mapping ->
+               composer.bestEffort.map<Throwable>(
+                       mapping, format = Throwable::class)?.also {
+                   throw it
+               }
             }
         }
         throw HttpException(response)

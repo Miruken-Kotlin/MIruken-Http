@@ -5,6 +5,7 @@ apply plugin: 'java-library'
 
 repositories {
     jcenter()
+    maven { url 'https://dl.bintray.com/miruken/MavenPackages' }
 }
 
 version = packageVersion

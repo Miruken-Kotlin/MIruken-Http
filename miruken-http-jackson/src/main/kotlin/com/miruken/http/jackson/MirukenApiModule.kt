@@ -15,6 +15,7 @@ import com.miruken.api.NamedType
 import com.miruken.api.Request
 import com.miruken.api.Try
 import com.miruken.http.RawJson
+import com.miruken.validate.ValidationErrorMapping
 import java.lang.reflect.Type
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -56,6 +57,7 @@ object MirukenApiModule : SimpleModule() {
         addDeserializer(RawJson::class.java, RawJsonDeserializer)
 
         register(VoidNamedType)
+        register(ValidationErrorMapping)
     }
 
     @JsonIgnoreType
