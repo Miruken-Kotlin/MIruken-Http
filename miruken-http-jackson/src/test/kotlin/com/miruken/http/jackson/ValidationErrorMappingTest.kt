@@ -1,17 +1,21 @@
 package com.miruken.http.jackson
 
-import com.miruken.api.NamedType
-import com.miruken.api.Request
-import com.miruken.api.schedule.Concurrent
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.miruken.http.Message
-import com.miruken.http.RawJson
+import com.miruken.validate.ValidationErrorMapping
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class ValidationErrorMappingTest {
     @Test fun `Deserializes message with validation errors`() {
-        val message = Message(StockQuote("AAPL", 207.48, StockType.Common))
-        val json    = JacksonProvider.mapper.writeValueAsString(message)
-        assertEquals("{\"payload\":{\"\$type\":\"StockQuote\",\"symbol\":\"AAPL\",\"value\":207.48,\"type\":0}}", json)
+        val json    = "{\"payload\":{\"\$type\":\"Miruken.Validate.ValidationErrors[], Miruken.Validate\",\"\$values\":[{\"propertyName\":\"MediaNumber\",\"errors\":[\"Not a valid membership\"]}]}}"
+        val message = JacksonProvider.mapper.readValue<Message>(json)
+        val mapping = message.payload as? ValidationErrorMapping
+        assertNotNull(mapping)
+
+        val errors = mapping.errors
+        assertEquals(1, errors.size)
+
     }
 }

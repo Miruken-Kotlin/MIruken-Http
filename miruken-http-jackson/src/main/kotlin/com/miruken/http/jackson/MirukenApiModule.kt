@@ -39,6 +39,10 @@ object MirukenApiModule : SimpleModule() {
                 NamedType::class.java,
                 NamedTypeMixin::class.java)
 
+        setMixInAnnotation(
+                ValidationErrorMapping::class.java,
+                ValidationErrorMappingMixin::class.java)
+
         addSerializer(LocalDateTime::class.java, LocalDateTimeSerializer)
         addDeserializer(LocalDateTime::class.java, LocalDateTimeDeserializer)
 
