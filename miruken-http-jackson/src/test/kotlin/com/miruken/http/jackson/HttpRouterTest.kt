@@ -1,11 +1,15 @@
 package com.miruken.http.jackson
 
 import com.miruken.api.Try
+import com.miruken.api.route.BatchRouter
 import com.miruken.api.route.routeTo
 import com.miruken.api.schedule.ScheduledResult
 import com.miruken.api.send
 import com.miruken.callback.NotHandledException
 import com.miruken.callback.batch
+import com.miruken.callback.policy.HandlerDescriptorFactory
+import com.miruken.callback.policy.MutableHandlerDescriptorFactory
+import com.miruken.callback.policy.registerDescriptor
 import com.miruken.http.HttpRouter
 import com.miruken.http.Message
 import okhttp3.mockwebserver.MockResponse
@@ -30,7 +34,13 @@ class HttpRouterTest {
 
     @Before
     fun setup() {
-       router = HttpRouter(JacksonProvider.retrofitConverter())
+        HandlerDescriptorFactory.useFactory(
+                MutableHandlerDescriptorFactory().apply {
+                    registerDescriptor<BatchRouter>()
+                    registerDescriptor<HttpRouter>()
+                }
+        )
+        router = HttpRouter(JacksonProvider.retrofitConverter())
     }
 
     @Test fun `Sends a request and receives a response`() {

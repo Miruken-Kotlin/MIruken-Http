@@ -6,6 +6,7 @@ import com.miruken.validate.ValidationErrorMapping
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class ValidationErrorMappingTest {
     @Test fun `Deserializes message with validation errors`() {
@@ -16,6 +17,7 @@ class ValidationErrorMappingTest {
 
         val errors = mapping.errors
         assertEquals(1, errors.size)
-
+        assertEquals("MediaNumber", errors[0].propertyName)
+        assertTrue(arrayOf("Not a valid membership").contentEquals(errors[0].errors!!))
     }
 }
