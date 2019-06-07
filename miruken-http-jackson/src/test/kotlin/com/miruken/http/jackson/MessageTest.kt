@@ -25,7 +25,7 @@ class MessageTest {
         val message = Message(Concurrent(listOf(
                 GetStockQuote("AAPL"), GetStockQuote("GOOGL"))))
         val json    = JacksonProvider.mapper.writeValueAsString(message)
-        assertEquals("{\"payload\":{\"\$type\":\"Miruken.Mediate.Schedule.Concurrent,Miruken.Mediate\",\"requests\":[{\"\$type\":\"GetStockQuote\",\"symbol\":\"AAPL\"},{\"\$type\":\"GetStockQuote\",\"symbol\":\"GOOGL\"}]}}", json)
+        assertEquals("{\"payload\":{\"\$type\":\"Miruken.Api.Schedule.Concurrent,Miruken\",\"requests\":[{\"\$type\":\"GetStockQuote\",\"symbol\":\"AAPL\"},{\"\$type\":\"GetStockQuote\",\"symbol\":\"GOOGL\"}]}}", json)
     }
 
     @Test fun `Serializes message with raw json`() {
