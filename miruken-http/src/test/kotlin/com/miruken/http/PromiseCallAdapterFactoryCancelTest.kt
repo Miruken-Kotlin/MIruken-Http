@@ -17,7 +17,7 @@ class PromiseCallAdapterFactoryCancelTest {
     private val factory  = PromiseCallAdapterFactory
     private val retrofit = Retrofit.Builder()
             .baseUrl("http://example.com")
-            .callFactory { TODO() }
+            //.callFactory { TODO() }
             .build()
 
     @Test fun `Cancel ignored on success`() {

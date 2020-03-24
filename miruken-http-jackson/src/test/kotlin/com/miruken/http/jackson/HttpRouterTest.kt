@@ -51,7 +51,7 @@ class HttpRouterTest {
                 .setBody(json))
         assertAsync(testName) { done ->
             router.send(GetStockQuote("GOOGL")
-                    .routeTo(server.url("/").url().toString())) then {
+                    .routeTo(server.url("/").toUrl().toString())) then {
                 assertEquals("GOOGL", it.symbol)
                 assertEquals(1071.49, it.value)
                 done()
@@ -67,7 +67,7 @@ class HttpRouterTest {
         server.enqueue(MockResponse()
                 .addHeader("Content-Type", "application/json; charset=utf-8")
                 .setBody(json))
-        val url = server.url("/").url().toString()
+        val url = server.url("/").toUrl().toString()
         assertAsync(testName) { done ->
             var count = 0
             router.batch { batch ->
@@ -96,7 +96,7 @@ class HttpRouterTest {
         server.enqueue(MockResponse()
                 .addHeader("Content-Type", "application/json; charset=utf-8")
                 .setBody(json))
-        val url = server.url("/").url().toString()
+        val url = server.url("/").toUrl().toString()
         assertAsync(testName) { done ->
             var count = 0
             router.batch { batch ->
@@ -121,7 +121,7 @@ class HttpRouterTest {
         server.enqueue(MockResponse()
                 .addHeader("Content-Type", "application/json; charset=utf-8")
                 .setBody(json))
-        val url = server.url("/").url().toString()
+        val url = server.url("/").toUrl().toString()
         assertAsync(testName) { done ->
             var count = 0
             router.batch { batch ->
@@ -139,7 +139,7 @@ class HttpRouterTest {
 
     @Test fun `Sends single batch as failed response`() {
         server.enqueue(MockResponse().setResponseCode(404))
-        val url = server.url("/").url().toString()
+        val url = server.url("/").toUrl().toString()
         assertAsync(testName) { done ->
             var count = 0
             router.batch { batch ->
@@ -156,7 +156,7 @@ class HttpRouterTest {
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
         assertAsync(testName) { done ->
             router.send(GetStockQuote("GOOGL")
-                    .routeTo(server.url("/").url().toString())) catch {
+                    .routeTo(server.url("/").toUrl().toString())) catch {
                 assertTrue(it is IOException)
                 done()
             }

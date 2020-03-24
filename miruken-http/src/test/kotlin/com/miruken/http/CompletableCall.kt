@@ -1,6 +1,7 @@
 package com.miruken.http
 
 import okhttp3.Request
+import okio.Timeout
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -71,13 +72,19 @@ class CompletableCall<T>(private val request: Request = DUMMY_REQUEST) : Call<T>
 
     override fun enqueue(callback: Callback<T>) {
         synchronized(lock) {
-            if (exception != null) {
-                callback.onFailure(this, exception!!)
-            } else if (response != null) {
-                callback.onResponse(this, response!!)
-            } else {
-                this.callback = callback
+            when {
+                exception != null -> {
+                    callback.onFailure(this, exception!!)
+                }
+                response != null -> {
+                    callback.onResponse(this, response!!)
+                }
+                else -> {
+                    this.callback = callback
+                }
             }
         }
     }
+
+    override fun timeout(): Timeout = Timeout.NONE
 }
