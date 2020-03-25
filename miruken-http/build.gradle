@@ -14,7 +14,7 @@ def artifactName = 'miruken-http'
 
 task sourcesJar(type: Jar) {
     from sourceSets.main.allSource
-    classifier = 'sources'
+    archiveClassifier.set("sources")
 }
 
 publishing {
