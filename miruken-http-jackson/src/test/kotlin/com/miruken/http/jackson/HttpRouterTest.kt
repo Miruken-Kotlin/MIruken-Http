@@ -1,5 +1,7 @@
 package com.miruken.http.jackson
 
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException
+import com.miruken.api.NamedType
 import com.miruken.api.Try
 import com.miruken.api.route.BatchRouter
 import com.miruken.api.route.routeTo
@@ -12,6 +14,7 @@ import com.miruken.callback.policy.MutableHandlerDescriptorFactory
 import com.miruken.callback.policy.registerDescriptor
 import com.miruken.http.HttpRouter
 import com.miruken.http.Message
+import com.miruken.http.UnknownExceptionPayload
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -21,6 +24,7 @@ import org.junit.Test
 import org.junit.rules.TestName
 import java.io.IOException
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class HttpRouterTest {
@@ -152,6 +156,69 @@ class HttpRouterTest {
         }
     }
 
+    @Test fun `Fails if error response not mapped`() {
+        MirukenApiModule.register("SomeError", SomeError::class.java)
+
+        server.enqueue(MockResponse()
+                .setResponseCode(500)
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .setBody("""{
+                       "payload": {
+                           "${'$'}type": "SomeError",
+                           "message": "This is bad"
+                        }
+                    }"""))
+
+        assertAsync(testName) { done ->
+            router.send(GetStockQuote("GOOGL")
+                    .routeTo(server.url("/").toUrl().toString())) catch {
+                assertTrue(it is UnknownExceptionPayload)
+                val someError = it.payload as? SomeError
+                assertNotNull(someError)
+                assertEquals("This is bad", someError.message)
+                done()
+            }
+        }
+    }
+
+    @Test fun `Fails if good error response not valid type`() {
+        server.enqueue(MockResponse()
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .setBody("""{
+                       "payload": {
+                           "${'$'}type": "ThisClassDoesNotExist"
+                        }
+                    }"""))
+
+        assertAsync(testName) { done ->
+            router.send(GetStockQuote("GOOGL")
+                    .routeTo(server.url("/").toUrl().toString())) catch {
+                assertTrue(it is InvalidTypeIdException)
+                done()
+            }
+        }
+    }
+
+    @Test fun `Fails if bad error response not valid type`() {
+        server.enqueue(MockResponse()
+                .setResponseCode(500)
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .setBody("""{
+                       "payload": {
+                           "${'$'}type": "ThisClassDoesNotExist"
+                        }
+                    }"""))
+
+        assertAsync(testName) { done ->
+            router.send(GetStockQuote("GOOGL")
+                    .routeTo(server.url("/").toUrl().toString())) catch {
+                assertTrue(it is UnknownExceptionPayload)
+                assertTrue(it.cause is InvalidTypeIdException)
+                done()
+            }
+        }
+    }
+
     @Test fun `Fails response when IO exception`() {
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
         assertAsync(testName) { done ->
@@ -163,7 +230,7 @@ class HttpRouterTest {
         }
     }
 
-    @Test fun `Fails is not routing HTTP`() {
+    @Test fun `Fails if not routing HTTP`() {
         assertAsync(testName) { done ->
             router.send(GetStockQuote("GOOGL")
                     .routeTo("queue")) catch {
@@ -171,5 +238,9 @@ class HttpRouterTest {
                 done()
             }
         }
+    }
+
+    data class SomeError(val message: String) : NamedType {
+        override val typeName = "SomeError"
     }
 }

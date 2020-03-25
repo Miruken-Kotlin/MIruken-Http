@@ -73,13 +73,15 @@ class HttpRouter
                 val message = _errorConverter.convert(errorBody) as? Message
                 message?.payload
             } catch (t: Throwable) {
-                null
+                throw UnknownExceptionPayload(errorBody, t)
             }?.also { mapping ->
-               composer.bestEffort.map<Throwable>(
+                composer.bestEffort.map<Throwable>(
                        mapping, format = Throwable::class)?.also {
-                   throw it
-               }
+                    throw it
+                }
+                throw UnknownExceptionPayload(mapping)
             }
+            throw UnknownExceptionPayload(errorBody)
         }
         throw HttpException(response)
     }
