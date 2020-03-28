@@ -7,14 +7,17 @@ import com.miruken.api.route.BatchRouter
 import com.miruken.api.route.routeTo
 import com.miruken.api.schedule.ScheduledResult
 import com.miruken.api.send
+import com.miruken.api.sendCo
 import com.miruken.callback.NotHandledException
 import com.miruken.callback.batch
+import com.miruken.callback.batchCo
 import com.miruken.callback.policy.HandlerDescriptorFactory
 import com.miruken.callback.policy.MutableHandlerDescriptorFactory
 import com.miruken.callback.policy.registerDescriptor
 import com.miruken.http.HttpRouter
 import com.miruken.http.Message
 import com.miruken.http.UnknownExceptionPayload
+import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -23,9 +26,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.io.IOException
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class HttpRouterTest {
     @Rule
@@ -63,6 +64,18 @@ class HttpRouterTest {
         }
     }
 
+    @Test fun `Sends a request and receives a response suspending`() = runBlocking<Unit> {
+        val message = Message(StockQuote("GOOGL", 1071.49, StockType.Common))
+        val json    = JacksonProvider.mapper.writeValueAsString(message)
+        server.enqueue(MockResponse()
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .setBody(json))
+        val quote = router.sendCo(GetStockQuote("GOOGL")
+                .routeTo(server.url("/").toUrl().toString()))
+        assertEquals("GOOGL", quote.symbol)
+        assertEquals(1071.49, quote.value)
+    }
+
     @Test fun `Batches requests and receives a response`() {
         val mixed = Message(ScheduledResult(listOf(
                 Try.Success(StockQuote("MSFT", 106.16, StockType.Preferred)),
@@ -85,12 +98,38 @@ class HttpRouterTest {
                     assertEquals("Symbol 'KLMN' not found", it.message)
                     ++count
                 }
-            } then {results ->
+            } then { results ->
                 assertEquals(1, results.size)
                 assertEquals(2, count)
                 done()
             }
         }
+    }
+
+    @Test fun `Batches requests and receives a response suspending`() = runBlocking {
+        val mixed = Message(ScheduledResult(listOf(
+                Try.Success(StockQuote("MSFT", 106.16, StockType.Preferred)),
+                Try.error(Exception("Symbol 'KLMN' not found")))))
+        val json  = JacksonProvider.mapper.writeValueAsString(mixed)
+        server.enqueue(MockResponse()
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .setBody(json))
+        val url     = server.url("/").toUrl().toString()
+        var count   = 0
+        val results = router.batchCo { batch ->
+            batch.send(GetStockQuote("MSFT").routeTo(url)) then {
+                assertEquals("MSFT", it.symbol)
+                assertEquals(106.16, it.value)
+                assertEquals(StockType.Preferred, it.type)
+                ++count
+            }
+            batch.send(GetStockQuote("KLMN").routeTo(url)) catch {
+                assertEquals("Symbol 'KLMN' not found", it.message)
+                ++count
+            }
+        }
+        assertEquals(1, results.size)
+        assertEquals(2, count)
     }
 
     @Test fun `Batches single request and receives a response`() {
@@ -118,6 +157,27 @@ class HttpRouterTest {
         }
     }
 
+    @Test fun `Batches single request and receives a response suspending`() = runBlocking {
+        val result = Message(ScheduledResult(listOf(
+                Try.Success(StockQuote("MSFT", 106.16, StockType.Preferred)))))
+        val json   = JacksonProvider.mapper.writeValueAsString(result)
+        server.enqueue(MockResponse()
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .setBody(json))
+        val url     = server.url("/").toUrl().toString()
+        var count   = 0
+        val results = router.batchCo { batch ->
+            batch.send(GetStockQuote("MSFT").routeTo(url)) then {
+                assertEquals("MSFT", it.symbol)
+                assertEquals(106.16, it.value)
+                assertEquals(StockType.Preferred, it.type)
+                ++count
+            }
+        }
+        assertEquals(1, results.size)
+        assertEquals(1, count)
+    }
+
     @Test fun `Batches single request and receives a failure`() {
         val result = Message(ScheduledResult(listOf(
                 Try.error(Exception("Symbol 'KLMN' not found")))))
@@ -141,6 +201,25 @@ class HttpRouterTest {
         }
     }
 
+    @Test fun `Batches single request and receives a failure suspending`() = runBlocking {
+        val result = Message(ScheduledResult(listOf(
+                Try.error(Exception("Symbol 'KLMN' not found")))))
+        val json   = JacksonProvider.mapper.writeValueAsString(result)
+        server.enqueue(MockResponse()
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .setBody(json))
+        val url     = server.url("/").toUrl().toString()
+        var count   = 0
+        val results = router.batchCo { batch ->
+            batch.send(GetStockQuote("KLMN").routeTo(url)) catch {
+                assertEquals("Symbol 'KLMN' not found", it.message)
+                ++count
+            }
+        }
+        assertEquals(1, results.size)
+        assertEquals(1, count)
+    }
+
     @Test fun `Sends single batch as failed response`() {
         server.enqueue(MockResponse().setResponseCode(404))
         val url = server.url("/").toUrl().toString()
@@ -152,6 +231,19 @@ class HttpRouterTest {
                 }
             } catch {
                 done()
+            }
+        }
+    }
+
+    @Test fun `Sends single batch as failed response suspending`() = runBlocking<Unit> {
+        server.enqueue(MockResponse().setResponseCode(404))
+        val url = server.url("/").toUrl().toString()
+        var count = 0
+        assertFails {
+            router.batchCo { batch ->
+                batch.send(GetStockQuote("MSFT").routeTo(url)) catch {
+                    ++count
+                }
             }
         }
     }
